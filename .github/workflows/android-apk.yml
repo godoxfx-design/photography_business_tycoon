@@ -13,7 +13,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Extract game project
+      - name: Extract game
         run: |
           unzip Photography_Business_Tycoon_Android_Project.zip -d extracted
 
@@ -27,6 +27,11 @@ jobs:
         with:
           distribution: temurin
           java-version: '21'
+
+      - name: Fix Vite build path
+        working-directory: extracted/Photography_Business_Tycoon_Android
+        run: |
+          npm pkg set 'scripts.build=vite build www --outDir ../dist'
 
       - name: Install and build
         working-directory: extracted/Photography_Business_Tycoon_Android
