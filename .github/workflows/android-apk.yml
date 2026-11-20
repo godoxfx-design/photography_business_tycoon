@@ -9,9 +9,13 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+
+      - name: Extract game project
+        run: |
+          unzip Photography_Business_Tycoon_Android_Project.zip -d extracted
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -24,22 +28,25 @@ jobs:
           distribution: temurin
           java-version: '21'
 
-      - name: Build web project
+      - name: Install and build
+        working-directory: extracted/Photography_Business_Tycoon_Android
         run: |
           npm install
           npm run build
 
       - name: Create Android project
+        working-directory: extracted/Photography_Business_Tycoon_Android
         run: |
           npx cap add android
           npx cap sync android
 
-      - name: Set landscape orientation
+      - name: Set landscape
+        working-directory: extracted/Photography_Business_Tycoon_Android
         run: |
-          python3 -c "from pathlib import Path; p=Path('android/app/src/main/AndroidManifest.xml'); s=p.read_text(); s=s.replace('android:name=\".MainActivity\"', 'android:screenOrientation=\"landscape\" android:name=\".MainActivity\"'); p.write_text(s)"
+          sed -i 's/android:name=".MainActivity"/android:screenOrientation="landscape" android:name=".MainActivity"/' android/app/src/main/AndroidManifest.xml
 
       - name: Build APK
-        working-directory: android
+        working-directory: extracted/Photography_Business_Tycoon_Android/android
         run: |
           chmod +x gradlew
           ./gradlew assembleDebug
@@ -48,5 +55,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: Photography-Tycoon-APK
-          path: android/app/build/outputs/apk/debug/app-debug.apk
-
+          path: extracted/Photography_Business_Tycoon_Android/android/app/build/outputs/apk/debug/app-debug.apk
