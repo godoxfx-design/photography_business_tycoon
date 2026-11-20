@@ -1,1 +1,52 @@
 
+name: Build Photography Tycoon APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Build web project
+        run: |
+          npm install
+          npm run build
+
+      - name: Create Android project
+        run: |
+          npx cap add android
+          npx cap sync android
+
+      - name: Set landscape orientation
+        run: |
+          python3 -c "from pathlib import Path; p=Path('android/app/src/main/AndroidManifest.xml'); s=p.read_text(); s=s.replace('android:name=\".MainActivity\"', 'android:screenOrientation=\"landscape\" android:name=\".MainActivity\"'); p.write_text(s)"
+
+      - name: Build APK
+        working-directory: android
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: Photography-Tycoon-APK
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+
